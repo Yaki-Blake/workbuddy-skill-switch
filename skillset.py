@@ -290,8 +290,7 @@ def _dmi_map(ctx):
 
     缓存里的 disableModelInvocation 由技能自身的 frontmatter
     （disable-model-invocation: true）或插件声明决定。为 True 的技能不会进入
-    系统提示的技能清单，因此基本不占上下文 token —— 实测对照：workbuddy-docx
-    插件下 9 个技能，7 个为 True，系统提示里只出现剩下 2 个。
+    系统提示的技能清单，因此基本不占上下文 token。
     """
     out = {}
     try:
