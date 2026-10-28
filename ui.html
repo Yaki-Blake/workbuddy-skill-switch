@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>技能名单</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#fff; --panel2:#fbfbfc; --line:#e4e7ec; --text:#1b1f24;
+    --muted:#697586; --accent:#2f6fed; --accent-soft:#eaf1fe;
+    --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#12141a; --panel:#1a1d24; --panel2:#16181e; --line:#2a2f39; --text:#e8eaee;
+      --muted:#98a2b3; --accent:#6b9bff; --accent-soft:#1e2a44;
+      --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--text);font:13.5px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    display:flex;flex-direction:column;height:100vh;overflow:hidden;
+  }
+  button{font:inherit;cursor:pointer;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:5px 11px;transition:.12s}
+  button:hover{border-color:var(--muted)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{filter:brightness(1.06)}
+  button.ghost{background:transparent}
+  button.mini{padding:3px 9px;font-size:12px}
+  .link{background:none;border:none;color:var(--muted);padding:2px 0;font-size:12px;text-align:left}
+  .link:hover{color:var(--accent);text-decoration:underline}
+  header.top{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto}
+  .brand{font-weight:650;font-size:14px;letter-spacing:.2px}
+  .brand span{color:var(--muted);font-weight:400;font-size:12px;margin-left:8px}
+  .top-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .pill{font-size:11.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .pill.run{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:color-mix(in srgb,var(--warn) 10%,transparent)}
+  .pill.free{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+  main{display:flex;flex:1;min-height:0}
+  aside.side{width:276px;flex:0 0 276px;background:var(--panel2);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  .side-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;font-weight:600;font-size:12.5px;color:var(--muted)}
+  .lists{overflow-y:auto;padding:0 10px 10px;flex:1}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-bottom:8px;transition:.12s}
+  .card:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+  .card.editing{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .card-t{display:flex;align-items:baseline;gap:6px}
+  .card-t b{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card-t .cnt{margin-left:auto;font-size:11.5px;color:var(--muted)}
+  .card-s{font-size:11.5px;color:var(--muted);margin:2px 0 7px}
+  .card-s i{font-style:normal}
+  .card-a{display:flex;gap:5px}
+  .card-a button{flex:1;padding:3px 0;font-size:11.5px}
+  .side-foot{padding:8px 14px 12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+  .empty{color:var(--muted);font-size:12.5px;padding:18px 8px;text-align:center;line-height:1.8}
+  section.main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+  .toolbar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel);flex:0 0 auto;flex-wrap:wrap}
+  #q{flex:0 0 260px;padding:6px 10px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;outline:none}
+  #q:focus{border-color:var(--accent)}
+  .chips{display:flex;gap:5px}
+  .chip{font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted);background:transparent;cursor:pointer}
+  .chip.on{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--accent)}
+  .sel-actions{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted)}
+  .sel-actions a{cursor:pointer}
+  .sel-actions a:hover{color:var(--accent)}
+  .tog{display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none}
+  .list-head{display:flex;align-items:center;gap:10px;padding:7px 16px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--panel2);flex:0 0 auto}
+  .list-head .editing{color:var(--accent);font-weight:600}
+  .head-right{margin-left:auto;position:relative}
+  #btnGroups b{color:var(--accent);font-weight:600;margin-left:5px}
+  .pop{position:absolute;right:0;top:calc(100% + 7px);width:440px;max-height:62vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:40;padding:6px;display:none}
+  .pop.show{display:block}
+  .pop .pop-tip{font-size:11.5px;color:var(--muted);padding:5px 9px 7px;border-bottom:1px dashed var(--line);margin-bottom:4px}
+  .grp{display:flex;gap:9px;align-items:flex-start;padding:7px 9px;border-radius:7px;cursor:pointer}
+  .grp:hover{background:var(--panel2)}
+  .grp .tick{flex:0 0 15px;height:15px;margin-top:1px;border:1px solid var(--line);border-radius:4px;font-size:10px;line-height:13px;text-align:center;color:transparent}
+  .grp.all .tick{background:var(--accent);border-color:var(--accent);color:#fff}
+  .grp.part .tick{border-color:var(--accent);color:var(--accent)}
+  .grp .g-main{flex:1;min-width:0}
+  .grp .g-t{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600}
+  .grp .g-n{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+  .grp .g-s{flex:0 0 auto;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .grp .kind{font-size:10px;font-weight:400;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:0 6px}
+  .rows{flex:1;overflow-y:auto;padding:6px 10px 90px}
+  .row{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+  .row:hover{background:var(--panel)}
+  .row.checked{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+  .row.dis{opacity:.5;cursor:not-allowed}
+  .row input{margin:0;accent-color:var(--accent)}
+  .nm{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;flex:0 0 208px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .desc{color:var(--muted);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .badge{font-size:10.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--muted);flex:0 0 auto}
+  .row .badge{min-width:42px;text-align:center}
+  .badge.builtin{min-width:auto}
+  .badge.default{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+  .badge.dormant{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+  .badge.off{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
+  .badge.builtin{background:var(--panel);font-size:10px}
+  .tk{font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:var(--muted);flex:0 0 auto;min-width:54px;text-align:right;opacity:.75;letter-spacing:-.2px}
+  .tk.hot{color:var(--bad);opacity:.9}
+  .tk.off{opacity:.45}
+  .cost{color:var(--muted);font-size:10.5px}
+  .savebar{position:fixed;left:276px;right:0;bottom:0;display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(16,24,40,.05)}
+  #listName{flex:0 0 220px;padding:6px 10px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;outline:none}
+  #listName:focus{border-color:var(--accent)}
+  #selCount{color:var(--muted);font-size:12px;margin-left:auto}
+  #toast{position:fixed;left:50%;bottom:74px;transform:translate(-50%,20px);background:#111;color:#fff;padding:9px 16px;border-radius:8px;font-size:12.5px;opacity:0;pointer-events:none;transition:.22s;max-width:70vw}
+  #toast.show{opacity:.94;transform:translate(-50%,0)}
+  .modal{position:fixed;inset:0;background:rgba(10,12,16,.45);display:none;align-items:center;justify-content:center;padding:24px;z-index:50}
+  .modal.show{display:flex}
+  .sheet{background:var(--panel);border-radius:12px;box-shadow:var(--shadow);width:min(620px,100%);max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+  .sheet h3{margin:0;padding:15px 18px;font-size:14px;border-bottom:1px solid var(--line)}
+  .sheet .body{padding:16px 18px;overflow-y:auto;font-size:13px;line-height:1.7}
+  .sheet .body pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap;word-break:break-all;max-height:46vh;overflow-y:auto;margin:8px 0 0}
+  .sheet .foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+  .sheet input{width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;outline:none;margin-top:6px}
+  .sheet input:focus{border-color:var(--accent)}
+  .hint{color:var(--muted);font-size:12.5px}
+  .warnbox{background:color-mix(in srgb,var(--warn) 12%,transparent);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:12.5px;line-height:1.7}
+  .hist{display:flex;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+  .hist .t{color:var(--muted);flex:0 0 128px;font-variant-numeric:tabular-nums}
+
+  /* 顶部视图切换 */
+  .tabs{display:flex;gap:2px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:2px}
+  .tabs button{border:none;background:transparent;padding:4px 14px;border-radius:6px;font-size:12.5px;color:var(--muted)}
+  .tabs button.on{background:var(--panel);color:var(--text);box-shadow:0 1px 2px rgba(16,24,40,.08);font-weight:600}
+
+  /* 用量页 */
+  #viewUsage{display:none;flex-direction:column;overflow-y:auto;padding:16px 20px 28px;gap:14px}
+  #viewUsage.show{display:flex}
+  main#viewLists.hide{display:none}
+  .sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  #usageTabs{align-self:flex-start}
+  .hide{display:none}
+  .sumc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .sumc .k{color:var(--muted);font-size:11.5px;margin-bottom:4px}
+  .sumc .v{font-size:19px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+  .sumc .s{color:var(--muted);font-size:11.5px;margin-top:3px}
+  .card2{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .card2 h4{margin:0;padding:11px 14px;font-size:12.5px;font-weight:600;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .card2 h4 .sub{color:var(--muted);font-weight:400;font-size:11.5px}
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.tb th{text-align:left;color:var(--muted);font-weight:500;font-size:11.5px;padding:7px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.tb td{padding:7px 14px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);white-space:nowrap;font-variant-numeric:tabular-nums}
+  table.tb tr:last-child td{border-bottom:none}
+  table.tb td.nm{font-family:ui-monospace,Consolas,monospace;font-size:12px;white-space:normal;word-break:break-all}
+  table.tb td.r,table.tb th.r{text-align:right}
+  table.tb tr.tot td{font-weight:600;background:var(--panel2)}
+  .bar{height:5px;border-radius:99px;background:var(--accent);opacity:.55;min-width:2px}
+  .note{background:var(--accent-soft);border-radius:8px;padding:10px 13px;font-size:12px;line-height:1.75;color:var(--text)}
+  .note b{font-weight:600}
+
+  /* 悬浮正文预览 */
+  #tip{position:fixed;z-index:60;width:min(560px,58vw);background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);display:none;overflow:hidden;pointer-events:none}
+  #tip.show{display:block}
+  #tip .tip-h{display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  #tip .tip-h .nm{flex:1;font-size:12.5px;color:var(--text)}
+  #tip .tip-b{padding:11px 13px;max-height:44vh;overflow:hidden}
+  #tip .tip-b pre{margin:0;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.65;color:var(--text);white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow-y:auto}
+  #tip .tip-f{display:flex;align-items:center;gap:10px;padding:7px 13px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);background:var(--panel2)}
+  #tip .tip-f .p{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Consolas,monospace}
+  #tip .more{color:var(--muted);font-size:11px;margin-top:8px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">技能名单<span id="cfgPath"></span></div>
+  <nav class="tabs" id="viewTabs">
+    <button data-view="lists" class="on">名单管理</button>
+    <button data-view="usage">真实用量</button>
+  </nav>
+  <div class="top-actions">
+    <span class="pill" id="runPill">检测中…</span>
+    <button class="ghost" id="btnRefresh">刷新</button>
+  </div>
+</header>
+
+<main id="viewLists">
+  <aside class="side">
+    <div class="side-head"><span>我的名单</span><button class="mini" id="btnNew">＋ 新建</button></div>
+    <div class="lists" id="listWrap"></div>
+    <div class="side-foot">
+      <button class="link" id="btnHistory">操作记录</button>
+      <button class="link" id="btnRestore">从上次备份恢复</button>
+    </div>
+  </aside>
+
+  <section class="main">
+    <div class="toolbar">
+      <input id="q" placeholder="搜索技能名或描述（按 / 聚焦）">
+      <div class="chips" id="chips"></div>
+      <div class="sel-actions">
+        <a id="selAll">全选</a><a id="selInvert">反选</a><a id="selNone">清空</a>
+        <label class="tog"><input type="checkbox" id="showAll"> 显示内置</label>
+      </div>
+    </div>
+    <div class="list-head">
+      <span class="editing" id="editingTip">未选择名单</span>
+      <span id="countTip"></span>
+      <div class="head-right">
+        <button class="mini" id="btnSort" title="按上下文开销从大到小排列，方便先关最贵的。再点一次恢复按名称">排序：名称</button>
+        <button class="mini" id="btnGroups">推荐勾选<b id="grpCount"></b></button>
+        <div class="pop" id="popGroups"></div>
+      </div>
+    </div>
+    <div class="rows" id="rows"></div>
+  </section>
+</main>
+
+<main id="viewUsage">
+  <div class="sum" id="usageSum"></div>
+  <nav class="tabs" id="usageTabs">
+    <button data-u="recent" class="on">最近调用</button>
+    <button data-u="skills">按技能归集</button>
+  </nav>
+  <div class="note hide" id="usageMsg">正在读取会话记录…</div>
+  <div class="card2" id="panelRecent">
+    <h4>最近调用 <span class="sub">技能被调用的那一轮，真实消耗</span></h4>
+    <div style="max-height:52vh;overflow-y:auto"><table class="tb" id="usageRecent"></table></div>
+  </div>
+  <div class="card2 hide" id="panelSkills">
+    <h4>按技能归集 <span class="sub" id="usageSkillSub"></span></h4>
+    <div style="max-height:52vh;overflow-y:auto"><table class="tb" id="usageSkills"></table></div>
+  </div>
+</main>
+
+<div class="savebar">
+  <input id="listName" placeholder="名单名称，例如：编程">
+  <button class="primary" id="btnSave">保存名单</button>
+  <button class="ghost" id="btnSaveAs">另存为新名单</button>
+  <button class="ghost" id="btnClearSel">取消编辑</button>
+  <span id="selCount">已选 0 个</span>
+</div>
+
+<div id="tip"></div>
+<div id="toast"></div>
+<div class="modal" id="modal"><div class="sheet">
+  <h3 id="mTitle">提示</h3>
+  <div class="body" id="mBody"></div>
+  <div class="foot" id="mFoot"></div>
+</div></div>
+
+<script>
+const S = {
+  data: null,
+  selected: new Set(),
+  editing: null,
+  filter: 'all',
+  q: '',
+  showAll: false,
+  sort: 'name',
+  usage: null,
+  detail: {},
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtTok = n => {
+  n = Number(n) || 0;
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(Math.round(n));
+};
+const sumTok = names => {
+  const map = {};
+  (S.data.skills || []).forEach(s => { map[s.name] = s.tokens || 0; });
+  let t = 0;
+  names.forEach(n => { t += map[n] || 0; });
+  return t;
+};
+
+async function api(path, body) {
+  const r = await fetch(path, body ? {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+  } : {});
+  return r.json();
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------- 模态框 ---------- */
+function closeModal() { $('modal').classList.remove('show'); }
+
+function showModal(title, bodyHtml, buttons) {
+  $('mTitle').textContent = title;
+  $('mBody').innerHTML = bodyHtml;
+  const foot = $('mFoot');
+  foot.innerHTML = '';
+  buttons.forEach(b => {
+    const el = document.createElement('button');
+    el.textContent = b.text;
+    if (b.primary) el.className = 'primary';
+    if (b.ghost) el.className = 'ghost';
+    el.onclick = () => { if (b.keep !== true) closeModal(); b.onClick && b.onClick(); };
+    foot.appendChild(el);
+  });
+  $('modal').classList.add('show');
+}
+
+function confirmBox(title, html, okText = '确定') {
+  return new Promise(res => {
+    showModal(title, html, [
+      {text: '取消', ghost: true, onClick: () => res(false)},
+      {text: okText, primary: true, onClick: () => res(true)},
+    ]);
+  });
+}
+
+function askName(title, def) {
+  return new Promise(res => {
+    showModal(title, `<div class="hint">给这份名单起个名字，之后可以一键开启或关闭它。</div>
+      <input id="askInput" value="${esc(def || '')}" maxlength="40" placeholder="例如：编程 / 办公 / 设计">`, [
+      {text: '取消', ghost: true, onClick: () => res(null)},
+      {text: '确定', primary: true, onClick: () => res(($('askInput').value || '').trim())},
+    ]);
+    setTimeout(() => { const i = $('askInput'); if (i) { i.focus(); i.select();
+      i.onkeydown = e => { if (e.key === 'Enter') { res(i.value.trim()); closeModal(); } }; } }, 30);
+  });
+}
+
+function showLog(title, log) {
+  showModal(title, `<pre>${esc(log)}</pre>`, [{text: '关闭', primary: true}]);
+}
+
+/* ---------- 渲染 ---------- */
+const STATUS_TEXT = {default: '开启', dormant: '休眠', off: '关闭', excluded: '已排除'};
+
+// 展示用状态：技能自身声明了 disable-model-invocation 的，效果等同于休眠
+//（模型不自动调用，仍可 /技能名 手动调），单列一类以免与「自己关掉的」混淆
+const effStatus = s => (s.status === 'default' && !s.injected) ? 'excluded' : s.status;
+
+function renderStatusPill() {
+  const d = S.data;
+  const p = $('runPill');
+  if (d.running) {
+    p.className = 'pill run';
+    p.textContent = d.running + ' 运行中 · 可浏览，暂不能写入';
+    p.title = '开启/关闭会写 settings.json，运行中的应用会覆盖它，请先完全退出';
+  } else {
+    p.className = 'pill free';
+    p.textContent = '应用未运行 · 可写入';
+    p.title = '现在执行开启/关闭会真正写入磁盘';
+  }
+  $('cfgPath').textContent = d.config;
+}
+
+function renderLists() {
+  const wrap = $('listWrap');
+  const lists = S.data.lists;
+  if (!lists.length) {
+    wrap.innerHTML = `<div class="empty">还没有名单。<br>点上方「＋ 新建」，<br>或直接在右侧勾选技能。</div>`;
+    return;
+  }
+  wrap.innerHTML = lists.map(l => {
+    const bits = [];
+    if (l.on) bits.push(`开启 ${l.on}`);
+    if (l.dormant) bits.push(`休眠 ${l.dormant}`);
+    if (l.off) bits.push(`关闭 ${l.off}`);
+    if (l.cost > 0) bits.push(`关闭省 ~${fmtTok(l.cost)} tok`);
+    const miss = l.missing.length ? ` · 缺失 ${l.missing.length}` : '';
+    return `<div class="card ${S.editing === l.name ? 'editing' : ''}" data-name="${esc(l.name)}">
+      <div class="card-t"><b>${esc(l.name)}</b><span class="cnt">${l.count} 个</span></div>
+      <div class="card-s">${bits.length ? bits.join(' · ') : '空名单'}${miss}</div>
+      <div class="card-a">
+        <button data-act="on" title="恢复默认，模型可自动调用">开启</button>
+        <button data-act="off" title="模型不自动调用，仍可 /技能名 手动调用">关闭</button>
+        <button data-act="edit" title="编辑成员">编辑</button>
+        <button data-act="del" title="删除名单（技能状态不变）">删除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function visibleSkills() {
+  const q = S.q.trim().toLowerCase();
+  const list = S.data.skills.filter(s => {
+    if (!S.showAll && s.source !== 'userSettings') return false;
+    if (S.filter !== 'all') {
+      const eff = effStatus(s);
+      if (S.filter === 'dormant') { if (eff !== 'dormant' && eff !== 'excluded') return false; }
+      else if (eff !== S.filter) return false;
+    }
+    if (q && !(s.name.toLowerCase().includes(q) || (s.desc || '').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  if (S.sort === 'cost') {
+    // 不占上下文的排最后，让“关它没收益”的一眼可见
+    list.sort((a, b) => ((b.injected ? b.tokens : -1) - (a.injected ? a.tokens : -1))
+      || a.name.localeCompare(b.name));
+  }
+  return list;
+}
+
+function renderRows() {
+  hideTip();
+  const rows = visibleSkills();
+  const box = $('rows');
+  box.innerHTML = rows.map(s => {
+    const dis = s.source !== 'userSettings';
+    const on = S.selected.has(s.name);
+    const src = dis ? `<span class="badge builtin">${s.source === 'builtin' ? '内置' : '插件'}</span>` : '';
+    const tip = s.status !== 'default' && s.by ? `title="最后由 ${esc(s.by)} 于 ${esc(s.at)} 设置"` : '';
+    return `<div class="row ${on ? 'checked' : ''} ${dis ? 'dis' : ''}" data-name="${esc(s.name)}">
+      <input type="checkbox" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}>
+      <span class="nm" ${tip}>${esc(s.name)}</span>
+      <span class="badge ${effStatus(s) === 'excluded' ? 'dormant' : s.status}" title="${effStatus(s) === 'excluded' ? '技能自身声明 disable-model-invocation：模型不会自动调用，仍可 /技能名 手动调，且不占上下文' : ''}">${STATUS_TEXT[effStatus(s)]}</span>
+      ${src}
+      ${s.injected
+        ? `<span class="tk ${s.tokens >= 250 ? 'hot' : ''}" title="系统提示中约占 ${Math.round(s.tokens)} token（按名称+完整描述估算）">~${fmtTok(s.tokens)}</span>`
+        : `<span class="tk off" title="该技能已声明 disable-model-invocation，不进入系统提示，不占上下文">—</span>`}
+      <span class="desc">${esc(s.desc || '')}</span>
+    </div>`;
+  }).join('') || `<div class="empty">没有匹配的技能</div>`;
+  $('countTip').textContent = `显示 ${rows.length} / 共 ${S.data.skills.filter(s => S.showAll || s.source === 'userSettings').length} 个 · 实际注入 ~${fmtTok(S.data.costActive)} tok`;
+  $('countTip').title = `真正进入系统提示的技能约占 ~${fmtTok(S.data.costActive)} token（其中用户级 ~${fmtTok(S.data.costUserActive)}）。另有 ~${fmtTok(S.data.costExcluded)} token 已通过 disable-model-invocation 排除。按名称+描述估算，SKILL.md 正文不计入。`;
+}
+
+function renderSelection() {
+  $('selCount').textContent = `已选 ${S.selected.size} 个 · ~${fmtTok(sumTok(S.selected))} tok`;
+  $('editingTip').textContent = S.editing ? `正在编辑：${S.editing}` : '未选择名单（勾选后可保存为新名单）';
+  $('listName').value = S.editing || '';
+  $('btnSave').textContent = S.editing ? '保存修改' : '保存为名单';
+  $('btnSaveAs').style.display = S.editing ? '' : 'none';
+  renderGroups();
+}
+
+function renderGroups() {
+  const gs = (S.data && S.data.groups) || [];
+  $('grpCount').textContent = gs.length ? gs.length + ' 组' : '';
+  $('btnGroups').disabled = !gs.length;
+  if (!gs.length) { $('popGroups').innerHTML = `<div class="pop-tip">没有可推荐的分组。</div>`; return; }
+  $('popGroups').innerHTML = `<div class="pop-tip">按插件目录与名称前缀自动归类（内置技能不参与）。点一下整组勾选，再点取消。</div>`
+    + gs.map(g => {
+      const sel = g.members.filter(m => S.selected.has(m)).length;
+      const cls = sel === g.members.length ? 'all' : (sel ? 'part' : '');
+      return `<div class="grp ${cls}" data-id="${esc(g.id)}">
+        <div class="tick">✓</div>
+        <div class="g-main">
+          <div class="g-t">${esc(g.label)}<span class="kind">${esc(g.note)}</span></div>
+          <div class="g-n" title="${esc(g.members.join('、'))}">${esc(g.members.join('、'))}</div>
+        </div>
+        <div class="g-s">${sel}/${g.members.length}</div>
+      </div>`;
+    }).join('');
+}
+
+function renderChips() {
+  const defs = [['all', '全部'], ['default', '开启'], ['dormant', '休眠'], ['off', '关闭']];
+  $('chips').innerHTML = defs.map(([k, t]) =>
+    `<button class="chip ${S.filter === k ? 'on' : ''}" data-f="${k}">${t}</button>`).join('');
+}
+
+function render() {
+  renderStatusPill();
+  renderLists();
+  renderChips();
+  renderRows();
+  renderSelection();
+}
+
+async function load(keepMsg) {
+  const d = await api('/api/state');
+  if (!d.ok) { toast(d.log || '读取失败'); return; }
+  S.data = d;
+  if (S.editing && !d.lists.some(l => l.name === S.editing)) S.editing = null;
+  render();
+  if (location.hash === '#groups') $('popGroups').classList.add('show');
+  if (location.hash === '#cost') { S.sort = 'cost'; syncSortBtn(); renderRows(); }
+  if (location.hash === '#usage') switchView('usage');
+  if (keepMsg) toast(keepMsg);
+}
+
+/* ---------- 交互 ---------- */
+function toggleSelect(name) {
+  hideTip();
+  if (S.selected.has(name)) S.selected.delete(name); else S.selected.add(name);
+  renderRows(); renderSelection();
+}
+
+$('rows').addEventListener('click', e => {
+  const row = e.target.closest('.row');
+  if (!row || row.classList.contains('dis')) return;
+  e.preventDefault();
+  toggleSelect(row.dataset.name);
+});
+
+/* ---------- 悬浮显示技能正文 ---------- */
+let tipTimer = null, tipName = '';
+
+function hideTip() {
+  clearTimeout(tipTimer);
+  tipName = '';
+  $('tip').classList.remove('show');
+}
+
+function placeTip(x, y) {
+  const t = $('tip');
+  const r = t.getBoundingClientRect();
+  let left = x + 18, top = y + 16;
+  if (left + r.width > innerWidth - 12) left = Math.max(12, x - r.width - 18);
+  if (top + r.height > innerHeight - 12) top = Math.max(12, innerHeight - r.height - 12);
+  t.style.left = left + 'px';
+  t.style.top = top + 'px';
+}
+
+function renderTip(name, d) {
+  const t = $('tip');
+  if (!d.ok) {
+    t.innerHTML = `<div class="tip-h"><span class="nm">${esc(name)}</span></div>
+      <div class="tip-b"><span class="hint">${esc(d.log || '读取失败')}</span></div>`;
+  } else {
+    const bits = [];
+    if (d.lines) bits.push(`${d.lines} 行`);
+    if (d.tokens) bits.push(`正文 ~${fmtTok(d.tokens)} tok`);
+    if (d.truncated || d.cut) bits.push('仅显示开头');
+    t.innerHTML = `<div class="tip-h"><span class="nm">${esc(name)}</span></div>
+      <div class="tip-b"><pre>${esc(d.body || '（该技能没有正文）')}</pre>
+        ${d.truncated ? '<div class="more">… 已截断，完整内容请用编辑器打开</div>' : ''}</div>
+      <div class="tip-f"><span class="p" title="${esc(d.file)}">${esc(d.fileName)}</span>
+        <span>${esc(bits.join(' · '))}</span></div>`;
+  }
+  t.classList.add('show');
+}
+
+async function showTip(name, x, y) {
+  const t = $('tip');
+  t.innerHTML = `<div class="tip-h"><span class="nm">${esc(name)}</span></div>
+    <div class="tip-b"><span class="hint">读取正文…</span></div>`;
+  t.classList.add('show');
+  placeTip(x, y);
+  if (!(name in S.detail)) {
+    S.detail[name] = await api('/api/skill/detail?name=' + encodeURIComponent(name));
+  }
+  if (tipName !== name) return;
+  renderTip(name, S.detail[name]);
+  placeTip(x, y);
+}
+
+$('rows').addEventListener('mouseover', e => {
+  const row = e.target.closest('.row');
+  if (!row) return;
+  const name = row.dataset.name;
+  if (name === tipName) return;
+  tipName = name;
+  clearTimeout(tipTimer);
+  const x = e.clientX, y = e.clientY;
+  tipTimer = setTimeout(() => showTip(name, x, y), 300);
+});
+$('rows').addEventListener('mouseleave', hideTip);
+$('rows').addEventListener('scroll', hideTip);
+
+$('listWrap').addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-act]');
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const name = card.dataset.name;
+  if (!btn) { editList(name); return; }
+  const act = btn.dataset.act;
+  if (act === 'edit') return editList(name);
+  if (act === 'del') {
+    const ok = await confirmBox('删除名单', `确定删除名单「${esc(name)}」？<div class="hint" style="margin-top:8px">只删名单本身，已经写入的技能状态不会改变。</div>`, '删除');
+    if (!ok) return;
+    const r = await api('/api/list/delete', {name});
+    if (S.editing === name) S.editing = null;
+    await load(r.log);
+    return;
+  }
+  doApply(name, act);
+});
+
+function editList(name) {
+  const l = S.data.lists.find(x => x.name === name);
+  if (!l) return;
+  S.editing = name;
+  S.selected = new Set(l.members);
+  S.filter = 'all'; S.q = ''; $('q').value = '';
+  render();
+  toast(`已载入「${name}」的 ${l.members.length} 个成员`);
+}
+
+async function doApply(name, action, hard, force) {
+  const d = S.data;
+  const l = d.lists.find(x => x.name === name);
+  const tip = action === 'on'
+    ? '恢复默认：模型可以自动调用这些技能。'
+    : (hard ? '彻底关闭：模型不能自动调用，也不能用 /技能名 手动调。'
+            : '休眠：模型不会自动调用，但仍可用 /技能名 手动调。');
+  const runningNote = d.running ? `<div class="warnbox">检测到 <b>${esc(d.running)}</b> 正在运行。运行中的应用会把内存里的旧配置写回磁盘，覆盖本次修改。请先完全退出（含托盘图标）再操作。</div>` : '';
+  const saveNote = (action === 'off' && l.cost > 0)
+    ? `<div class="hint" style="margin-top:6px">其中 ${l.on} 个当前仍开启，关闭后预计减少 <b>~${fmtTok(l.cost)} token</b> 的上下文占用（按名称+描述估算）。</div>`
+    : '';
+  const desc = `<div>名单「<b>${esc(name)}</b>」共 ${l.count} 个技能。</div><div class="hint" style="margin-top:6px">${tip}</div>${saveNote}${runningNote}`;
+  const ok = await confirmBox(action === 'on' ? '开启名单' : (hard ? '彻底关闭名单' : '关闭名单'), desc, action === 'on' ? '开启' : '关闭');
+  if (!ok) return;
+  const r = await api('/api/apply', {name, action, hard: !!hard, force: !!force});
+  if (r.ok) {
+    showLog(action === 'on' ? '已开启' : '已关闭', r.log);
+    await load();
+  } else {
+    showLog('未执行', r.log);
+  }
+}
+
+$('btnNew').onclick = async () => {
+  const n = await askName('新建名单');
+  if (!n) return;
+  S.editing = null;
+  S.selected = new Set();
+  const r = await api('/api/list/save', {name: n, members: []});
+  if (r.ok) { S.editing = n; await load(r.log); }
+  else showLog('未保存', r.log);
+};
+
+$('btnSave').onclick = () => saveList(false);
+$('btnSaveAs').onclick = () => saveList(true);
+
+async function saveList(asNew) {
+  const name = asNew ? await askName('另存为新名单', S.editing ? S.editing + ' 副本' : '')
+                     : ($('listName').value || '').trim();
+  if (!name) return;
+  const members = Array.from(S.selected);
+  const r = await api('/api/list/save', {
+    name, members, oldName: asNew ? null : S.editing,
+  });
+  if (r.ok) { S.editing = name; await load(r.log); }
+  else showLog('未保存', r.log);
+}
+
+$('btnClearSel').onclick = () => {
+  S.editing = null; S.selected = new Set(); render();
+};
+
+$('chips').addEventListener('click', e => {
+  const c = e.target.closest('.chip');
+  if (!c) return;
+  S.filter = c.dataset.f; renderChips(); renderRows();
+});
+
+$('q').oninput = e => { S.q = e.target.value; renderRows(); };
+$('showAll').onchange = e => { S.showAll = e.target.checked; renderRows(); };
+
+$('selAll').onclick = () => {
+  visibleSkills().filter(s => s.source === 'userSettings').forEach(s => S.selected.add(s.name));
+  renderRows(); renderSelection();
+};
+$('selNone').onclick = () => { S.selected.clear(); renderRows(); renderSelection(); };
+$('selInvert').onclick = () => {
+  visibleSkills().filter(s => s.source === 'userSettings').forEach(s => {
+    if (S.selected.has(s.name)) S.selected.delete(s.name); else S.selected.add(s.name);
+  });
+  renderRows(); renderSelection();
+};
+
+$('btnRefresh').onclick = () => {
+  S.detail = {};
+  load('已刷新');
+  if (S.usage) loadUsage(true);
+};
+
+$('btnGroups').onclick = e => {
+  e.stopPropagation();
+  $('popGroups').classList.toggle('show');
+};
+
+$('popGroups').addEventListener('click', e => {
+  const row = e.target.closest('.grp');
+  if (!row) return;
+  const g = (S.data.groups || []).find(x => x.id === row.dataset.id);
+  if (!g) return;
+  const all = g.members.every(m => S.selected.has(m));
+  g.members.forEach(m => all ? S.selected.delete(m) : S.selected.add(m));
+  renderRows(); renderSelection();
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.head-right')) $('popGroups').classList.remove('show');
+});
+
+$('btnHistory').onclick = () => {
+  const h = S.data.history;
+  if (!h.length) return showModal('操作记录', '<div class="hint">还没有执行过开启或关闭。</div>', [{text: '关闭', primary: true}]);
+  const rows = h.map(x => `<div class="hist"><span class="t">${esc(x.at)}</span>
+    <span>${x.action === 'on' ? '开启' : (x.action === 'off-hard' ? '彻底关闭' : '关闭')}
+    「${esc(x.list)}」 ${x.count} 个</span></div>`).join('');
+  showModal('最近的操作', rows, [{text: '关闭', primary: true}]);
+};
+
+$('btnRestore').onclick = async () => {
+  const b = S.data.backups;
+  if (!b.length) return showModal('恢复备份', '<div class="hint">还没有备份文件。</div>', [{text: '关闭', primary: true}]);
+  const list = b.slice(0, 6).map(x => `<div class="hist"><span class="t">${esc(x.at)}</span><span>${esc(x.name)}</span></div>`).join('');
+  const ok = await confirmBox('从最近备份恢复', `会把你刚建名单、开启或关闭的操作撤销到最近一次写入之前。最新备份：<div class="hist"><span class="t">${esc(b[0].at)}</span><span>${esc(b[0].name)}</span></div>${list}`, '恢复');
+  if (!ok) return;
+  const r = await api('/api/restore', {force: false});
+  showLog(r.ok ? '已恢复' : '未恢复', r.log);
+  if (r.ok) load();
+};
+
+function syncSortBtn() {
+  const b = $('btnSort');
+  b.textContent = S.sort === 'cost' ? '排序：token ↓' : '排序：名称';
+  b.classList.toggle('primary', S.sort === 'cost');
+}
+
+$('btnSort').onclick = () => {
+  S.sort = S.sort === 'cost' ? 'name' : 'cost';
+  try { localStorage.setItem('ss_sort', S.sort); } catch (e) {}
+  syncSortBtn();
+  renderRows();
+};
+
+/* ---------- 真实用量视图 ---------- */
+const fmtBig = n => {
+  n = Number(n) || 0;
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k';
+  return String(Math.round(n));
+};
+const fmtTime = ts => {
+  if (!ts) return '—';
+  const d = new Date(ts * 1000);
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+async function loadUsage(refresh) {
+  $('usageMsg').classList.remove('hide');
+  $('usageMsg').textContent = '正在扫描会话记录…';
+  const d = await api('/api/usage' + (refresh ? '?refresh=1' : ''));
+  if (!d.ok) {
+    $('usageMsg').classList.remove('hide');
+    $('usageMsg').textContent = d.log || '读取失败';
+    return;
+  }
+  $('usageMsg').classList.add('hide');
+  S.usage = d;
+  renderUsage();
+}
+
+function renderUsage() {
+  const d = S.usage;
+  if (!d || !d.ok) return;
+  const t = d.totals;
+  const hit = t.prompt ? t.cache_hit / t.prompt * 100 : 0;
+  const share = t.credit ? t.skill_credit / t.credit * 100 : 0;
+
+  const cards = [
+    ['总积分', t.credit.toFixed(2), `${d.scanned.files} 个会话，${t.requests} 次请求`],
+    ['输入 token', fmtBig(t.prompt), `缓存命中 ${hit.toFixed(1)}%`],
+    ['输出 token', fmtBig(t.completion), `${t.steps} 个计费步骤`],
+    ['技能轮次积分', t.skill_credit.toFixed(2), `占总积分 ${share.toFixed(1)}%`],
+  ];
+  $('usageSum').innerHTML = cards.map(([k, v, s]) =>
+    `<div class="sumc"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="s">${esc(s)}</div></div>`).join('');
+
+  const maxCredit = Math.max(...d.skills.map(s => s.credit), 0.0001);
+  const rows = d.skills.map(s => `<tr>
+    <td class="nm">${esc(s.name)}</td>
+    <td class="r">${s.calls}</td>
+    <td class="r">${s.sessions}</td>
+    <td class="r">${fmtBig(s.prompt)}</td>
+    <td class="r">${fmtBig(s.completion)}</td>
+    <td class="r">${s.credit.toFixed(2)}</td>
+    <td class="r">${s.avg_credit.toFixed(2)}</td>
+    <td style="width:90px"><div class="bar" style="width:${Math.max(2, s.credit / maxCredit * 90)}px"></div></td>
+    <td class="r" style="color:var(--muted)">${fmtTime(s.last_at)}</td>
+  </tr>`).join('') || `<tr><td colspan="9" style="color:var(--muted);padding:14px">没有找到技能调用记录。</td></tr>`;
+
+  $('usageSkills').innerHTML = `<thead><tr>
+      <th>技能</th><th class="r">调用</th><th class="r">会话</th>
+      <th class="r">输入 token</th><th class="r">输出 token</th>
+      <th class="r">积分</th><th class="r">平均积分</th><th>占比</th><th class="r">最近</th>
+    </tr></thead><tbody>${rows}</tbody>`;
+
+  const n = d.skills.length;
+  const sumCalls = d.skills.reduce((a, s) => a + s.calls, 0);
+  $('usageSkillSub').textContent = `${n} 个技能，共 ${sumCalls} 次调用`;
+
+  const rec = d.recent.map(r => `<tr>
+    <td style="color:var(--muted)">${fmtTime(r.at)}</td>
+    <td class="nm">${esc(r.skill)}</td>
+    <td class="nm" style="color:var(--muted);font-size:11.5px">${esc(r.session.slice(0, 8))}</td>
+    <td class="r">${r.credit.toFixed(2)}</td>
+    <td class="r">${fmtBig(r.tokens)}</td>
+    <td class="r">${r.steps}</td>
+  </tr>`).join('') || `<tr><td colspan="6" style="color:var(--muted);padding:14px">暂无记录。</td></tr>`;
+
+  $('usageRecent').innerHTML = `<thead><tr>
+      <th>时间</th><th>技能</th><th>会话</th>
+      <th class="r">积分</th><th class="r">token</th><th class="r">步骤</th>
+    </tr></thead><tbody>${rec}</tbody>`;
+}
+
+function switchView(v) {
+  document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  $('viewLists').classList.toggle('hide', v !== 'lists');
+  $('viewUsage').classList.toggle('show', v === 'usage');
+  document.querySelector('.savebar').style.display = v === 'lists' ? '' : 'none';
+  if (v === 'usage' && !S.usage) loadUsage(false);
+}
+
+document.querySelectorAll('#viewTabs button').forEach(b => {
+  b.onclick = () => switchView(b.dataset.view);
+});
+
+/* 用量页：按技能归集 / 最近调用 切换 */
+function switchUsage(u) {
+  document.querySelectorAll('#usageTabs button').forEach(b => b.classList.toggle('on', b.dataset.u === u));
+  $('panelRecent').classList.toggle('hide', u !== 'recent');
+  $('panelSkills').classList.toggle('hide', u !== 'skills');
+}
+
+document.querySelectorAll('#usageTabs button').forEach(b => {
+  b.onclick = () => switchUsage(b.dataset.u);
+});
+switchUsage('recent');
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); $('popGroups').classList.remove('show'); }
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault(); $('q').focus();
+  }
+});
+
+try { const v = localStorage.getItem('ss_sort'); if (v === 'cost' || v === 'name') S.sort = v; } catch (e) {}
+syncSortBtn();
+load();
+setInterval(() => { api('/api/state').then(d => {
+  if (d.ok && S.data && !!d.running !== !!S.data.running) { S.data.running = d.running; renderStatusPill(); }
+}); }, 5000);
+</script>
+</body>
+</html>

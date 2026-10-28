@@ -1,0 +1,12 @@
+* text=auto
+
+# 这个批处理必须是 CRLF + GBK 字节，cmd.exe 才能正确解析。
+# 标记为 binary 让 Git 完全不做换行转换，避免在别的机器上 clone 后损坏。
+*.bat binary
+
+# 源码与文档统一用 LF，避免在不同机器上 clone 后出现整文件变更
+*.py   text eol=lf
+*.md   text eol=lf
+*.html text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf

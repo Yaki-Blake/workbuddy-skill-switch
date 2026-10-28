@@ -1,0 +1,23 @@
+# Python 字节码
+__pycache__/
+*.py[cod]
+
+# 运行时生成的数据（各人机器不同，不入库）
+lists.json
+ledger.json
+.usage-cache.json
+
+# 编辑器与系统
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+
+# WorkBuddy 工作目录（本地笔记与缓存）
+.workbuddy/
+
+# 临时测试文件
+_t*.bat
+_c*.js
+_check.js
